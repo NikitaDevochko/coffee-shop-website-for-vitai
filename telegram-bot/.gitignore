@@ -1,0 +1,17 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# --- Окружение и секреты ---
+.env
+!.env.example
+
+# --- Стейт доставки (SQLite) ---
+data/
+*.db
+*.db-wal
+*.db-shm

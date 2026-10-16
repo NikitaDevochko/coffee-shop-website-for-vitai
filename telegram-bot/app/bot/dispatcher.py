@@ -1,0 +1,1 @@
+# TODO(этап B0): aiogram 3 Dispatcher/Bot, регистрация хендлеров.

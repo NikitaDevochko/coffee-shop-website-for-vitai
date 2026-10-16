@@ -1,0 +1,79 @@
+"""Отправка карточки заявки (этапы B3–B4)."""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+from pathlib import Path
+
+from aiogram import Bot
+from aiogram.exceptions import TelegramForbiddenError, TelegramRetryAfter, TelegramAPIError
+
+from app.config import Settings
+from app.templates.lead_card import render_lead_card
+
+logger = logging.getLogger(__name__)
+
+
+class LeadSender:
+    def __init__(self, bot: Bot, settings: Settings) -> None:
+        self.bot = bot
+        self.settings = settings
+        self.image = self._resolve_image(settings.lead_card_image)
+
+    @staticmethod
+    def _resolve_image(value: str) -> Path | None:
+        if value.startswith(("http://", "https://")):
+            return None
+        path = Path(value)
+        if not path.is_absolute():
+            path = (Path(__file__).resolve().parent.parent.parent / path).resolve()
+        return path if path.is_file() else None
+
+    async def send(self, lead: dict, position: int | None = None) -> None:
+        """Отправить заявку в чат(ы) менеджеров. Бросает исключение, если не получилось."""
+        card = render_lead_card(lead, position=position)
+        image_url = self.settings.lead_card_image if self.image is None else None
+
+        for chat_id in self.settings.chat_ids:
+            for attempt in range(1, self.settings.max_send_attempts + 1):
+                try:
+                    if self.image is not None:
+                        from aiogram.types import FSInputFile
+
+                        await self.bot.send_photo(
+                            chat_id=chat_id,
+                            photo=FSInputFile(self.image),
+                            caption=card.caption,
+                            parse_mode="HTML",
+                        )
+                    elif image_url:
+                        await self.bot.send_photo(
+                            chat_id=chat_id,
+                            photo=image_url,
+                            caption=card.caption,
+                            parse_mode="HTML",
+                        )
+                    else:
+                        await self.bot.send_message(
+                            chat_id=chat_id, text=card.caption, parse_mode="HTML"
+                        )
+                    return
+                except TelegramRetryAfter as exc:
+                    logger.warning("Telegram просит подождать %s c", exc.retry_after)
+                    await asyncio.sleep(exc.retry_after)
+                except TelegramForbiddenError as exc:
+                    logger.error("Бот заблокирован в чате %s: %s", chat_id, exc)
+                    raise
+                except TelegramAPIError as exc:
+                    logger.warning(
+                        "Ошибка Telegram (попытка %s/%s) для чата %s: %s",
+                        attempt,
+                        self.settings.max_send_attempts,
+                        chat_id,
+                        exc,
+                    )
+                    if attempt < self.settings.max_send_attempts:
+                        await asyncio.sleep(self.settings.retry_backoff_seconds * attempt)
+                    else:
+                        raise
