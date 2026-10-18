@@ -40,7 +40,14 @@ class LeadSender:
             return 0
 
         card = render_lead_card(lead, position=position)
-        image_url = self.settings.lead_card_image if self.image is None else None
+        # В photo можно передать только настоящий URL. Локальный путь, которого
+        # нет на диске, раньше уходил как URL и Telegram отвечал
+        # "Bad Request: wrong HTTP URL specified".
+        image_url = (
+            self.settings.lead_card_image
+            if self.image is None and self.settings.lead_card_image.startswith(("http://", "https://"))
+            else None
+        )
         delivered = 0
 
         for chat_id in chats:
