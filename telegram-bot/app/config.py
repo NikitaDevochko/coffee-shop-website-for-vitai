@@ -43,12 +43,14 @@ class Settings(BaseSettings):
 
     @property
     def missing_required(self) -> list[str]:
-        """Чего не хватает для реальной работы (локальная проверка конфига)."""
+        """Чего не хватает для работы.
+
+        TELEGRAM_CHAT_ID не обязателен: подписчиков набирает сам бот —
+        любой, кто напишет ему /start, начинает получать заявки.
+        """
         missing: list[str] = []
         if not self.telegram_bot_token or "replace-me" in self.telegram_bot_token:
             missing.append("TELEGRAM_BOT_TOKEN")
-        if not self.chat_ids:
-            missing.append("TELEGRAM_CHAT_ID")
         return missing
 
 

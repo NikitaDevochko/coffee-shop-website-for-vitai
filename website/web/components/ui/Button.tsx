@@ -1,21 +1,15 @@
 /**
- * Кнопка и CTA-ссылка. Один компонент на два случая: `href` — ссылка (все CTA
- * ведут на #lead), без `href` — настоящая кнопка (submit в форме).
+ * Кнопка и CTA-ссылка. Один компонент на два случая: `href` — ссылка, без `href` —
+ * настоящая кнопка (submit в форме).
  *
- * Состояние загрузки приходит сверху пропом `isLoading`, своих хуков нет —
- * значит компонент работает и в серверных секциях, и в клиентских.
+ * Единый стиль по стайлгайду: 14px, padding 8px/16px, радиус 16px, фон #473334.
+ * Вариантов и размеров нет намеренно — все кнопки на странице выглядят одинаково.
  */
 
 import type { MouseEvent, ReactNode } from "react";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "accent";
-export type ButtonSize = "md" | "lg";
-
 export interface ButtonProps {
   children: ReactNode;
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  block?: boolean;
   isLoading?: boolean;
   disabled?: boolean;
   className?: string;
@@ -32,9 +26,6 @@ export interface ButtonProps {
 
 export function Button({
   children,
-  variant = "primary",
-  size = "md",
-  block = false,
   isLoading = false,
   disabled = false,
   className = "",
@@ -48,16 +39,7 @@ export function Button({
   onClick,
   "aria-label": ariaLabel,
 }: ButtonProps) {
-  const classes = [
-    "btn",
-    `btn--${variant}`,
-    `btn--${size}`,
-    block ? "btn--block" : "",
-    isLoading ? "btn--loading" : "",
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const classes = ["btn", isLoading ? "btn--loading" : "", className].filter(Boolean).join(" ");
 
   const inner = (
     <>

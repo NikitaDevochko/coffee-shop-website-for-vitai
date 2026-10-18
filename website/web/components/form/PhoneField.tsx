@@ -10,18 +10,17 @@
 
 import { useRef, type ChangeEvent } from "react";
 
-import { FieldError } from "@/components/form/FieldError";
 import { formatPhoneInput, nationalDigits, PHONE_TEMPLATE } from "@/lib/validation/phone";
 
 export interface PhoneFieldProps {
   id: string;
   value: string;
-  error?: string | null;
   hint: string;
   hintId: string;
-  errorId: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
+  /** Подсветка рамки: по стайлгайду текст ошибки показывается в модальном окне. */
+  isInvalid?: boolean;
   disabled?: boolean;
   name?: string;
 }
@@ -41,12 +40,11 @@ function maskValue(raw: string, previous: string): string {
 export function PhoneField({
   id,
   value,
-  error,
   hint,
   hintId,
-  errorId,
   onChange,
   onBlur,
+  isInvalid = false,
   disabled = false,
   name = "phone",
 }: PhoneFieldProps) {
@@ -58,8 +56,6 @@ export function PhoneField({
     onChange(next);
   };
 
-  const describedBy = error ? `${hintId} ${errorId}` : hintId;
-
   return (
     <div className="field">
       <label className="field__label" htmlFor={id}>
@@ -68,7 +64,7 @@ export function PhoneField({
       <input
         id={id}
         name={name}
-        className={error ? "field__input field__input--invalid" : "field__input"}
+        className={isInvalid ? "field__input field__input--invalid" : "field__input"}
         type="tel"
         inputMode="tel"
         autoComplete="tel"
@@ -78,13 +74,12 @@ export function PhoneField({
         onBlur={onBlur}
         disabled={disabled}
         required
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy}
+        aria-invalid={isInvalid ? true : undefined}
+        aria-describedby={hintId}
       />
       <p className="field__hint" id={hintId}>
         {hint}
       </p>
-      <FieldError id={errorId} message={error} />
     </div>
   );
 }

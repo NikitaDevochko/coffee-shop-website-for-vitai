@@ -27,6 +27,12 @@ CREATE TABLE IF NOT EXISTS deliveries (
     error TEXT,
     sent_at TEXT
 );
+-- Чаты, которые сами написали боту: им и отправляем заявки.
+CREATE TABLE IF NOT EXISTS chats (
+    chat_id TEXT PRIMARY KEY,
+    title TEXT,
+    added_at TEXT NOT NULL
+);
 """
 
 
@@ -119,6 +125,28 @@ class StateStore:
             (lead_id, error[:500]),
         )
         await self.db.commit()
+
+    # --- подписчики ---------------------------------------------------------
+    async def add_chat(self, chat_id: int | str, title: str | None = None) -> bool:
+        """Запомнить чат. Возвращает True, если чат новый."""
+        cursor = await self.db.execute("SELECT 1 FROM chats WHERE chat_id = ?", (str(chat_id),))
+        exists = await cursor.fetchone() is not None
+        await self.db.execute(
+            "INSERT INTO chats (chat_id, title, added_at) VALUES (?, ?, ?) "
+            "ON CONFLICT(chat_id) DO UPDATE SET title = excluded.title",
+            (str(chat_id), title, datetime.now(timezone.utc).isoformat()),
+        )
+        await self.db.commit()
+        return not exists
+
+    async def remove_chat(self, chat_id: int | str) -> bool:
+        cursor = await self.db.execute("DELETE FROM chats WHERE chat_id = ?", (str(chat_id),))
+        await self.db.commit()
+        return cursor.rowcount > 0
+
+    async def list_chats(self) -> list[str]:
+        cursor = await self.db.execute("SELECT chat_id FROM chats ORDER BY added_at")
+        return [row["chat_id"] for row in await cursor.fetchall()]
 
     async def stats(self) -> Stats:
         last_id = await self.get_last_id()

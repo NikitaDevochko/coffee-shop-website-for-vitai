@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { site } from "@/lib/content/site";
 import "./globals.css";
 
-const title = "Кварта — обжарка кофе в Минске: жарим в четверг, привозим в пятницу";
+const title = "Кварта";
 const description =
   "Мастерская «Кварта» в Минске: обжариваем партиями по 5 кг с 2019 года, зерно у вас на 1–3 день после обжарки. Эфиопия Иргачеффе, Колумбия Уила, Бразилия Серрадо и дрип-пакеты. Подписка — 54 BYN в месяц, доставка по пятницам.";
 
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     siteName: "Обжарка «Кварта»",
     title: "Кварта — обжарка кофе в Минске",
     description,
-    // OG-картинку добавим, когда будет фото из мастерской: public/img/og.jpg
+    // OG-картинку добавим, когда будет фото из мастерской: public/img/og.webp
   },
   twitter: {
     card: "summary_large_image",

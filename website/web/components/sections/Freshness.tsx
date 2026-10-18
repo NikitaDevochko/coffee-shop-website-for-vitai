@@ -1,80 +1,78 @@
+/**
+ * Блок «О нас».
+ *
+ * Текст и фотографии — одна сетка из двух колонок и двух строк:
+ *   1-я строка: заголовок слева, подпись «Основатели» справа (по низу заголовка);
+ *   2-я строка: оба абзаца слева, фотографии справа (начинаются на одном уровне
+ *   с первым абзацем).
+ * Сетка центрирована по экрану.
+ */
+
+import Image from "next/image";
+
 import { Reveal } from "@/components/ui/Reveal";
-import { Section } from "@/components/ui/Section";
+import { SectionMarker } from "@/components/ui/SectionMarker";
 import { site } from "@/lib/content/site";
 
-const days = [
-  {
-    day: "четверг",
-    text: "Жарим партию — 5 кг за раз. На каждой пачке появляется дата обжарки.",
-  },
-  {
-    day: "четверг, вечер",
-    text: "Фасуем по 50 г. Пачка закрывается сразу, чтобы зерно не выдыхалось раньше времени.",
-  },
-  {
-    day: "пятница",
-    text: "Садимся в машину и развозим по Минску. От 50 BYN — бесплатно.",
-  },
-  {
-    day: "1–3 день",
-    text: "Кофе у вас. Это и есть тот самый момент, когда он вкуснее всего.",
-  },
-];
+const founders = [
+  { name: "Анна", src: "/img/Ann.webp", alt: "Анна, основательница обжарки «Кварта»" },
+  { name: "Дмитрий", src: "/img/Dima.webp", alt: "Дмитрий, основатель обжарки «Кварта»" },
+] as const;
 
-export function Freshness() {
+export function About() {
   return (
-    <Section
-      id="freshness"
-      tone="paper"
-      eyebrow="Почему свежесть"
-      title="Кофе не становится лучше со временем"
-      lead="Это не про снобизм, а про вкус: у зерна есть окно, когда оно раскрывается. Мы работаем внутри этого окна."
-    >
-      <div className="fresh">
-        <div className="fresh__text">
-          <Reveal delay={60}>
-            <p className="fresh__paragraph">
-              Через две-три недели после обжарки из зерна уходит то, за что мы его покупаем: сначала
-              цветы и бергамот в Эфиопии, потом карамель в Колумбии. Остаётся кофе — горячий и
-              горький. Поэтому у нас нет склада с готовыми пачками: то, что не уехало на этой
-              неделе, мы честно допиваем сами.
-            </p>
-          </Reveal>
-
-          <Reveal delay={120}>
-            <p className="fresh__paragraph">
-              В четверг с утра жарим. К вечеру фасуем и подписываем дату. В пятницу развозим. К вам
-              зерно попадает на {site.freshWindow} —{" "}
-              <strong>это и есть весь секрет, других нет</strong>.
-            </p>
-          </Reveal>
-
-          <Reveal delay={180}>
-            <blockquote className="fresh__quote">
-              <p>
-                Мы оба работали бариста и устали объяснять гостям, почему в баре кофе вкусный, а
-                дома — нет. Обычно дело не в технике, а в зерне, которому месяц. Так и появилась
-                «Кварта».
-              </p>
-              <footer className="fresh__author">Аня и Дмитрий, основатели</footer>
-            </blockquote>
-          </Reveal>
-        </div>
-
-        <Reveal className="fresh__aside" delay={90}>
-          <div className="panel panel--note">
-            <h3 className="panel__title">Как это устроено по дням</h3>
-            <ol className="timeline">
-              {days.map((item) => (
-                <li className="timeline__item" key={item.day}>
-                  <span className="timeline__day">{item.day}</span>
-                  <span className="timeline__text">{item.text}</span>
-                </li>
-              ))}
-            </ol>
+    <section className="section section--about" id="about">
+      <div className="section__inner">
+        <div className="about">
+          <div className="about__head">
+            <SectionMarker />
+            <h2 className="section__title">
+              Кофе не становится
+              <br />
+              лучше со временем
+            </h2>
           </div>
-        </Reveal>
+
+          <p className="about__label">Основатели</p>
+
+          <div className="about__text">
+            <Reveal delay={60}>
+              <p className="text-info about__paragraph">
+                Через две-три недели после обжарки из зерна уходит то, за что мы его покупаем:
+                сначала цветы и бергамот в Эфиопии, потом карамель в Колумбии. Остаётся кофе —
+                горячий и горький. Поэтому у нас нет склада с готовыми пачками: то, что не уехало на
+                этой неделе, мы честно допиваем сами.
+              </p>
+            </Reveal>
+
+            <Reveal delay={120}>
+              <p className="text-info about__paragraph">
+                В четверг с утра жарим. К вечеру фасуем и подписываем дату. В пятницу развозим. К вам
+                зерно попадает на {site.freshWindow} —{" "}
+                <strong>это и есть весь секрет, других нет</strong>.
+              </p>
+            </Reveal>
+          </div>
+
+          <div className="about__photos">
+            {founders.map((founder, index) => (
+              <Reveal key={founder.name} delay={index * 80}>
+                <figure className="about__figure">
+                  <Image
+                    className="about__photo"
+                    src={founder.src}
+                    alt={founder.alt}
+                    width={520}
+                    height={520}
+                    sizes="(min-width: 900px) 250px, 45vw"
+                  />
+                  <figcaption className="about__caption text-note">{founder.name}</figcaption>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+        </div>
       </div>
-    </Section>
+    </section>
   );
 }
