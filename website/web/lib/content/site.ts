@@ -31,6 +31,15 @@ export const site = {
     country: "Беларусь",
   },
 
+  /**
+   * Телефон в шапке. В брифе клиента телефона нет — это значение согласовано
+   * с заказчиком в рамках редизайна и должно быть подтверждено перед публикацией.
+   */
+  phone: {
+    raw: "+375291234567",
+    label: "+375 (29) 123-45-67",
+  },
+
   hours: [
     { days: "пн–пт", time: "8:00–20:00" },
     { days: "сб–вс", time: "10:00–18:00" },
@@ -51,17 +60,17 @@ export const site = {
     packWeight: "50 г",
   },
 
-  /** Хэндлы в соцсетях подтвердить у клиента перед публикацией. */
+  /** Контакты в мессенджерах — подтверждены заказчиком при редизайне. */
   social: {
     instagram: {
       label: "Инстаграм",
-      handle: "@kvarta.roast",
-      url: "https://www.instagram.com/kvarta.roast/",
+      handle: "@nikki.tok",
+      url: "https://www.instagram.com/nikki.tok/",
     },
     telegram: {
       label: "Телеграм",
-      handle: "@kvarta_roast",
-      url: "https://t.me/kvarta_roast",
+      handle: "@n1kk1_tok",
+      url: "https://t.me/n1kk1_tok",
     },
   },
 

@@ -59,7 +59,16 @@ class Poller:
         if not items:
             return
 
-        logger.info("Получено заявок: %s (после id=%s)", len(items), after_id)
+        chats = await self.state.list_chats()
+        if not chats:
+            # Подписчиков ещё нет: ждём, пока кто-нибудь напишет боту /start.
+            # Курсор не двигаем, чтобы заявки не потерялись.
+            logger.info(
+                "Заявок в очереди: %s, но подписчиков нет — напишите боту /start", len(items)
+            )
+            return
+
+        logger.info("Получено заявок: %s (после id=%s), подписчиков: %s", len(items), after_id, len(chats))
 
         for lead in items:
             lead_id = int(lead["id"])
@@ -78,11 +87,11 @@ class Poller:
                 continue
 
             try:
-                await self.sender.send(lead)
+                delivered = await self.sender.send(lead, chats)
             except Exception as exc:
                 await self.state.mark_failed(lead_id, str(exc))
                 raise ApiError(f"не удалось отправить заявку {lead_id}: {exc}") from exc
 
             await self.state.mark_sent(lead_id)
             await self.state.set_last_id(lead_id)
-            logger.info("Заявка %s отправлена в чат менеджеров", lead_id)
+            logger.info("Заявка %s отправлена подписчикам: %s", lead_id, delivered)

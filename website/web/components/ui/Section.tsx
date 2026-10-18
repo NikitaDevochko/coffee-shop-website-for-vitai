@@ -1,20 +1,20 @@
 /**
- * Обёртка секции: вертикальные ритмы, фон (бумага / крем / тёмно-зелёный),
- * заголовок с надзаголовком и «лидом». Якорь вешается на сам <section>, чтобы
- * ссылки вида #lead работали без лишних обёрток.
+ * Обёртка секции: горизонтальные отступы (--pad-x), вертикальные ритмы,
+ * фон блока и необязательная шапка с надзаголовком и лидом.
+ *
+ * Закладку раздела и заголовок рисует сама секция — так закладку можно
+ * поставить в одну строку с заголовком (см. блок «О нас») и она гарантированно
+ * есть везде, где нужна.
  */
 
 import type { ReactNode } from "react";
 
-import { Reveal } from "@/components/ui/Reveal";
-
-export type SectionTone = "paper" | "cream" | "deep";
+export type SectionTone = "plain" | "about" | "menu" | "process";
 
 export interface SectionProps {
   children: ReactNode;
   id?: string;
   eyebrow?: string;
-  title?: ReactNode;
   lead?: ReactNode;
   tone?: SectionTone;
   className?: string;
@@ -24,23 +24,21 @@ export function Section({
   children,
   id,
   eyebrow,
-  title,
   lead,
-  tone = "paper",
+  tone = "plain",
   className = "",
 }: SectionProps) {
   const classes = ["section", `section--${tone}`, className].filter(Boolean).join(" ");
-  const hasHead = Boolean(eyebrow || title || lead);
+  const hasHead = Boolean(eyebrow || lead);
 
   return (
     <section className={classes} id={id}>
-      <div className="container">
+      <div className="section__inner">
         {hasHead ? (
-          <Reveal className="section__head">
-            {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
-            {title ? <h2 className="section__title">{title}</h2> : null}
-            {lead ? <p className="section__lead">{lead}</p> : null}
-          </Reveal>
+          <div className="section__head">
+            {eyebrow ? <p className="eyebrow text-note">{eyebrow}</p> : null}
+            {lead ? <p className="text-info">{lead}</p> : null}
+          </div>
         ) : null}
         {children}
       </div>

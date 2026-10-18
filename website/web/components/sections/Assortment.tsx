@@ -1,74 +1,102 @@
 "use client";
 
 /**
- * Ассортимент с ценами из брифа. Кнопка «Отложить» — это ссылка на #lead,
- * которая заодно кладёт выбранную позицию в форму (см. lib/selection.ts).
+ * Блок «Меню»: четыре позиции чередованием «картинка / описание», под ними
+ * подписка (тот же фон и цвета, что у меню).
+ *
+ * Теги-дескрипторы из карточки убраны; вкусы идут строкой, способ заваривания
+ * перенесён в описание — текст не теряется.
  */
+
+import Image from "next/image";
 
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { Section } from "@/components/ui/Section";
+import { SectionMarker } from "@/components/ui/SectionMarker";
 import { coffeePositions } from "@/lib/content/coffee";
 import { selectPosition } from "@/lib/selection";
+import { Subscription } from "@/components/sections/Subscription";
+
+const POSITION_IMAGES: Record<string, string> = {
+  "ethiopia-yirgacheffe": "/img/coff_1.webp",
+  "colombia-huila": "/img/coff_2.webp",
+  "brazil-cerrado": "/img/coff_3.webp",
+  "drip-assorted": "/img/coff_4.webp",
+};
 
 export function Assortment() {
   return (
-    <Section
-      id="assortment"
-      tone="cream"
-      eyebrow="Что жарим сейчас"
-      title="Четыре позиции — и хватит"
-      lead="Маленький ассортимент — не лень, а способ успевать за каждой партией. Всё фасуем по 50 г: это три-четыре чашки в воронке или пять-шесть эспрессо."
-    >
-      <div className="coffee-grid">
-        {coffeePositions.map((position, index) => (
-          <Reveal key={position.id} delay={index * 70}>
-            <article className="coffee-card">
-              {position.badge ? (
-                <span className="coffee-card__badge">{position.badge}</span>
-              ) : null}
+    <Section id="menu" tone="menu">
+      <div className="menu__row">
+        <div className="section__head section__head--with-marker">
+          <SectionMarker />
+          <h2 className="section__title">
+            Что жарим сейчас
+            <br />
+            Четыре позиции — и хватит
+          </h2>
+        </div>
 
-              <h3 className="coffee-card__name">{position.name}</h3>
-              <p className="coffee-card__tagline">{position.tagline}</p>
+        <p className="menu__intro-text text-info">
+          Маленький ассортимент — не лень, а способ успевать за каждой партией. Всё фасуем по 50 г:
+          это три-четыре чашки в воронке или пять-шесть эспрессо.
+        </p>
+      </div>
 
-              <ul className="coffee-card__notes">
-                {position.notes.map((note) => (
-                  <li className="coffee-note" key={note}>
-                    {note}
-                  </li>
-                ))}
-                {position.roast ? <li className="coffee-note coffee-note--roast">{position.roast}</li> : null}
-              </ul>
+      <ul className="menu__list">
+        {coffeePositions.map((position, index) => {
+          const image = POSITION_IMAGES[position.id];
+          const isEven = index % 2 === 1;
 
-              <p className="coffee-card__description">{position.description}</p>
-              <p className="coffee-card__brew">{position.brew}</p>
+          return (
+            <li
+              className={isEven ? "menu__item menu__item--reverse" : "menu__item"}
+              key={position.id}
+            >
+              <Reveal className="menu__media">
+                <Image
+                  className="menu__photo"
+                  src={image}
+                  alt={position.name}
+                  width={400}
+                  height={400}
+                  sizes="(min-width: 900px) 400px, 90vw"
+                />
+              </Reveal>
 
-              <div className="coffee-card__foot">
-                <p className="coffee-card__price">
-                  <span className="coffee-card__price-value">{position.priceByn}</span>
-                  <span className="coffee-card__price-unit">BYN</span>
-                  <span className="coffee-card__weight">/ {position.weight}</span>
+              <Reveal className="menu__body" delay={80}>
+                <h3 className="menu__name">{position.name}</h3>
+                <p className="menu__tastes text-info">
+                  {[...position.notes, position.roast].filter(Boolean).join(", ")}
+                </p>
+                <p className="menu__description text-info">
+                  {position.description} {position.brew}
+                </p>
+                <p className="menu__price text-info">
+                  {position.weight} — {position.priceByn} BYN
                 </p>
                 <Button
                   href="#lead"
-                  variant="secondary"
                   onClick={() => selectPosition(position.id)}
                   aria-label={`Отложить ${position.name}`}
                 >
                   Отложить
                 </Button>
-              </div>
-            </article>
-          </Reveal>
-        ))}
-      </div>
+              </Reveal>
+            </li>
+          );
+        })}
+      </ul>
 
       <Reveal delay={120}>
-        <p className="coffee-footnote">
+        <p className="menu__footnote text-info">
           Не знаете, что выбрать? Напишите в заявке «на ваш вкус» — предложим зерно под ваш способ
           заваривания. Оплата при получении: наличными или картой.
         </p>
       </Reveal>
+
+      <Subscription />
     </Section>
   );
 }

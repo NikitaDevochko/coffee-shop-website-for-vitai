@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
 
 import { FieldError } from "@/components/form/FieldError";
+import { PhoneErrorModal } from "@/components/form/PhoneErrorModal";
 import { PhoneField } from "@/components/form/PhoneField";
 import { useLeadSubmit } from "@/components/form/useLeadSubmit";
 import { Button } from "@/components/ui/Button";
@@ -27,7 +28,7 @@ import {
   type IntentEventDetail,
   type PositionEventDetail,
 } from "@/lib/selection";
-import { parsePhone } from "@/lib/validation/phone";
+import { parsePhone, PHONE_ERROR_MESSAGES } from "@/lib/validation/phone";
 
 export interface LeadFormProps {
   formId?: string;
@@ -68,6 +69,19 @@ const PHONE_HINT =
 const NAME_HINT = "Как к вам обращаться. Можно только имя.";
 
 const COMMENT_HINT = "Не обязательно. Например: помол под воронку, привезти в пятницу после 18:00.";
+
+/**
+ * Текст модального окна для неверного кода оператора.
+ * Подставляем в него то, что человек реально набрал, а не заглушку «**».
+ */
+function unknownOperatorMessage(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  const national = digits.startsWith("375") ? digits.slice(3) : digits.replace(/^80?/, "");
+  const code = national.slice(0, 2);
+  return code
+    ? `Код ${code} не похож на белорусский. Проверьте номер: +375 (29) 123-45-67.`
+    : PHONE_ERROR_MESSAGES.unknown_operator;
+}
 
 function validate(values: FormValues, intent: LeadIntent | ""): LeadFieldErrors {
   const errors: LeadFieldErrors = {};
@@ -111,7 +125,6 @@ export function LeadForm({
     phoneHint: `${fieldPrefix}-phone-hint`,
     commentHint: `${fieldPrefix}-comment-hint`,
     nameError: `${fieldPrefix}-name-error`,
-    phoneError: `${fieldPrefix}-phone-error`,
     commentError: `${fieldPrefix}-comment-error`,
     intentError: `${fieldPrefix}-intent-error`,
     formError: `${fieldPrefix}-form-error`,
@@ -124,7 +137,23 @@ export function LeadForm({
   const [cta, setCta] = useState(ctaVariant);
   const [fieldErrors, setFieldErrors] = useState<LeadFieldErrors>({});
   const [localMessage, setLocalMessage] = useState<string | null>(null);
+  const [phoneModal, setPhoneModal] = useState<{ message: string } | null>(null);
   const formErrorRef = useRef<HTMLDivElement | null>(null);
+
+  const closePhoneModal = useCallback(() => setPhoneModal(null), []);
+
+  /**
+   * Неверный номер — единственная ошибка, которую по стайлгайду показываем
+   * модальным окном. Возвращает true, если окно открыто.
+   */
+  const showPhoneError = useCallback((rawPhone: string, message: string) => {
+    const parsed = parsePhone(rawPhone);
+    setPhoneModal({
+      message:
+        parsed.errorCode === "unknown_operator" ? unknownOperatorMessage(rawPhone) : message,
+    });
+    return true;
+  }, []);
 
   const { state, isSubmitting, submit, reset } = useLeadSubmit({ formId, ctaVariant: cta });
 
@@ -214,10 +243,24 @@ export function LeadForm({
     setLocalMessage(null);
 
     const errors = validate(values, intent);
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
+
+    // Телефон оформляем отдельным окном, остальные поля — подсказками в форме.
+    if (errors.phone) {
+      showPhoneError(values.phone, errors.phone);
+    }
+
+    const remaining = { ...errors };
+    delete remaining.phone;
+
+    if (Object.keys(remaining).length > 0) {
+      setFieldErrors({ ...remaining, phone: errors.phone });
       setLocalMessage("Проверьте поля — ниже подсказки.");
-      focusFirstError(errors);
+      focusFirstError(remaining);
+      return;
+    }
+
+    if (errors.phone) {
+      setFieldErrors({ phone: errors.phone });
       return;
     }
 
@@ -235,8 +278,15 @@ export function LeadForm({
     if (!result) return;
 
     if (result.status === "validation_error") {
-      setFieldErrors(result.fields);
-      focusFirstError(result.fields);
+      if (result.fields.phone) {
+        showPhoneError(values.phone, result.fields.phone);
+      }
+      const serverFields = { ...result.fields };
+      delete serverFields.phone;
+      if (Object.keys(serverFields).length > 0) {
+        setFieldErrors(serverFields);
+        focusFirstError(serverFields);
+      }
       return;
     }
 
@@ -272,9 +322,7 @@ export function LeadForm({
           {site.social.telegram.label}: {site.social.telegram.handle}.
         </p>
         <div className="lead-success__actions">
-          <Button variant="secondary" onClick={handleReset}>
-            Отправить ещё одну заявку
-          </Button>
+          <Button onClick={handleReset}>Отправить ещё одну заявку</Button>
         </div>
       </div>
     );
@@ -348,10 +396,9 @@ export function LeadForm({
         <PhoneField
           id={ids.phone}
           value={values.phone}
-          error={fieldErrors.phone}
+          isInvalid={Boolean(fieldErrors.phone)}
           hint={PHONE_HINT}
           hintId={ids.phoneHint}
-          errorId={ids.phoneError}
           onChange={handlePhoneChange}
           onBlur={handlePhoneBlur}
         />
@@ -418,13 +465,19 @@ export function LeadForm({
       </div>
 
       <div className="form__actions">
-        <Button type="submit" size="lg" isLoading={isSubmitting}>
+        <Button type="submit" isLoading={isSubmitting}>
           {isSubmitting ? "Отправляем…" : "Отправить заявку"}
         </Button>
-        <p className="form__consent">
+        <p className="form__consent text-note">
           Данные используем только для связи по заявке. Никаких рассылок.
         </p>
       </div>
+
+      <PhoneErrorModal
+        isOpen={phoneModal !== null}
+        message={phoneModal?.message ?? ""}
+        onClose={closePhoneModal}
+      />
     </form>
   );
 }

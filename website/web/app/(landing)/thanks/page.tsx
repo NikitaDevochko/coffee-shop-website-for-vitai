@@ -32,7 +32,6 @@ export default function ThanksPage() {
           <Button href="/">Вернуться на главную</Button>
           <Button
             href={site.social.telegram.url}
-            variant="secondary"
             target="_blank"
             rel="noreferrer noopener"
           >

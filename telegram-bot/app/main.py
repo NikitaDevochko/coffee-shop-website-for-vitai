@@ -1,4 +1,11 @@
-"""Точка входа telegram-бота (этапы B0, B4)."""
+"""Точка входа telegram-бота (этапы B0, B4).
+
+Работают две задачи в одном цикле событий:
+  * aiogram-поллинг апдейтов — принимает /start и подписывает чаты;
+  * собственный поллер — читает заявки из API сайта и рассылает подписчикам.
+
+Заранее заданный chat_id не нужен: подписчиков набирает сам бот.
+"""
 
 from __future__ import annotations
 
@@ -11,6 +18,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramUnauthorizedError
 
+from app.bot.dispatcher import create_dispatcher
 from app.config import get_settings
 from app.services.poller import Poller
 from app.services.state_store import StateStore
@@ -45,13 +53,20 @@ async def main() -> int:
         token=settings.telegram_bot_token,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
+    dispatcher = create_dispatcher(state)
     poller = Poller(bot, settings, state)
 
     try:
         me = await bot.get_me()
-        logger.info("Бот @%s запущен, чаты: %s", me.username, ", ".join(settings.chat_ids))
-        task = asyncio.create_task(poller.run())
-        await task
+        chats = await state.list_chats()
+        logger.info("Бот @%s запущен. Подписчиков: %s", me.username, len(chats))
+        if not chats:
+            logger.info("Подписчиков нет: напишите боту /start, чтобы получать заявки")
+
+        poller_task = asyncio.create_task(poller.run())
+        # start_polling блокирующий: держим его основным, поллер крутится рядом.
+        await dispatcher.start_polling(bot, allowed_updates=["message"])
+        await poller_task
     except TelegramUnauthorizedError:
         logger.error("Telegram отклонил токен. Проверьте TELEGRAM_BOT_TOKEN в .env.")
         return 2
