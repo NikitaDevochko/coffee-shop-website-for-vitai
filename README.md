@@ -1,68 +1,37 @@
-# Кварта — тестовое задание (лендинг обжарки кофе + Telegram-бот)
+# Кварта (результат работ)
 
-Репозиторий содержит **два независимых подпроекта**, как и требуется по заданию.
+Репозиторий содержит **два независимых подпроекта**
 
 | Подпроект | Папка | Что внутри | Стек |
 |---|---|---|---|
 | **1. Сайт** | [`website/`](website/) | `web/` — лендинг, `api/` — приём заявок | Next.js (App Router) + Tailwind · Python FastAPI · SQLite |
 | **2. Telegram-бот** | [`telegram-bot/`](telegram-bot/) | сервис уведомлений о новых заявках | Python · aiogram 3 · long polling |
 
-## Документы
+## Статус
 
-- **[ANALYSIS.md](ANALYSIS.md)** — разбор требований брифа `kvarta-brief.pdf`, архитектура, этапы, чек-лист сдачи.
-- [website/STAGES.md](website/STAGES.md) — этапы 0–7 по сайту (оценка ~4,5–5 ч).
-- [telegram-bot/STAGES.md](telegram-bot/STAGES.md) — этапы B0–B5 по боту (оценка ~1 ч).
-- [website/docs/API.md](website/docs/API.md) — контракт между сайтом и ботом.
-- [website/docs/COPY.md](website/docs/COPY.md) — факты и тексты лендинга.
-- [website/docs/DECISIONS.md](website/docs/DECISIONS.md), [telegram-bot/DECISIONS.md](telegram-bot/DECISIONS.md) — обоснование технических решений (в т.ч. выбор SQLite).
+**Работает:**
+- приём заявок с лендинга,
+- валидация белорусских номеров,
+- дедупликация 10 минут,
+- хранение в SQLite,
+- выдача заявок для бота,
+- лендинг с обязательными блоками и формой.
 
-## Структура репозитория
+**Не сделано:**
+- деплой на бесплатном хосте не принимает карту, по этой причине отдельные части (API, TgBot) не работают постоянно.
+  локально развернутый проект в полном рабочем состоянии.
+- миграции Alembic (сейчас схема создаётся через `create_all`);
 
-```
-coffee-shop-website-for-vitai/
-├── ANALYSIS.md                  разбор брифа и план работ
-├── README.md                    этот файл
-│
-├── website/                     ПОДПРОЕКТ 1: сайт
-│   ├── README.md  STAGES.md
-│   ├── docs/                    API.md · COPY.md · ANALYSIS.md · DECISIONS.md
-│   ├── deploy/                  vercel.json + инструкция
-│   │
-│   ├── web/                     Next.js-фронтенд (деплой на Vercel)
-│   │   ├── app/(landing)/       страница лендинга и «спасибо»
-│   │   ├── app/api/health/      healthcheck фронта
-│   │   ├── components/          sections/ (блоки лендинга) · form/ · ui/
-│   │   ├── lib/                 api.ts · content/ · analytics/ · validation/
-│   │   ├── public/img/          оптимизированные фото
-│   │   └── tests/               Vitest + Playwright
-│   │
-│   └── api/                     FastAPI (деплой отдельно, постоянный диск)
-│       ├── app/
-│       │   ├── main.py  config.py
-│       │   ├── api/             deps.py · routes/ (leads.py, health.py)
-│       │   ├── models/          SQLAlchemy: lead.py
-│       │   ├── schemas/         Pydantic: lead.py, common.py
-│       │   ├── repositories/    доступ к данным
-│       │   ├── services/        lead_service.py (валидация, дедуп) · notify_service.py
-│       │   ├── middleware/      rate_limit.py · request_id.py
-│       │   ├── db/              session.py · base.py
-│       │   └── utils/           phone.py · logging.py
-│       ├── migrations/          Alembic
-│       ├── scripts/             seed_leads.py
-│       └── tests/               pytest
-│
-└── telegram-bot/                ПОДПРОЕКТ 2: бот
-    ├── README.md  STAGES.md  DECISIONS.md
-    ├── app/
-    │   ├── main.py  config.py
-    │   ├── bot/                 dispatcher.py · handlers/
-    │   ├── services/            poller.py · api_client.py · state_store.py · sender.py
-    │   ├── templates/           lead_card.py
-    │   ├── utils/               formatting.py · logging.py
-    │   └── static/              обложка карточки заявки
-    ├── deploy/
-    └── tests/
-```
+**Что нейросеть делала не так**
+- после написания подробного промпта на дизайн сайта было совершено много ошибок, скорее всего связанных с
+выходом за контекстное окно. В связи с этим много доработаток было вручную и частисно нейросетью
+- настройка ТГ бота: было реализовано так, что требовался определенный ID чата. Для демонстрации это не удобно
+
+**Что сделал бы иначе или доработал**
+- по дизайну: уменьшил бы количество информации, много повторяющегося текста
+- фикс мобильной версии (шапки) - не успевал
+- доработка анимаций (не критично, но потратил бы чуть больше времени на нее, чтобы улучшить)
+- доработка ТГ бота, чтобы были картинки, а не только текстовая информация
 
 ## Как это работает
 
@@ -126,15 +95,5 @@ $env:NEXT_PUBLIC_API_BASE_URL="http://127.0.0.1:8000"; node scripts\check-form.m
 - `next dev` запускает дочерний процесс компилятора: в песочнице это `spawn EPERM`,
   запускать нужно вне ограничений.
 
-## Статус
 
-**Работает:** приём заявок с лендинга, валидация белорусских номеров, дедупликация 10 минут,
-хранение в SQLite, выдача заявок для бота, лендинг с обязательными блоками и формой.
-
-**Не сделано:**
-- бот не проверен вживую — нужен реальный `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID`;
-  без них он завершается с понятным сообщением (код выхода 2);
-- миграции Alembic (сейчас схема создаётся через `create_all`) — этап 3.1 плана;
-- автотесты (pytest/vitest/playwright) — этап 5; вместо них два скрипта проверки выше;
-- деплой (Vercel + хостинг API), Lighthouse, лог работы с ИИ — этапы 6–7.
 
